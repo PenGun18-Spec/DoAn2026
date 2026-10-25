@@ -11,6 +11,8 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <array>
+#include <string>
+#include <vector>
 
 namespace {
 constexpr int ID_TABS = 100;
@@ -21,6 +23,14 @@ HFONT font;
 std::array<HWND, 3> pages{};
 HWND maSinhVien, hoTen, maLop, maDiemDanh, ngayHoc, coMat, topK;
 HWND bangSinhVien, bangDiemDanh, bangXepHang;
+
+// Mot sinh vien gom ma, ho ten, lop.
+struct SinhVien {
+    std::wstring maSV;
+    std::wstring hoTen;
+    std::wstring maLop;
+};
+std::vector<SinhVien> danhSach;
 
 HWND control(HWND parent, const wchar_t* cls, const wchar_t* text,
              DWORD style, int x, int y, int width, int height, int id = 0) {
@@ -48,9 +58,47 @@ HWND table(HWND page, const wchar_t* const* columns, int count) {
     }
     return result;
 }
+// Doc noi dung mot o nhap (EDIT).
+std::wstring docEdit(HWND editBox) {
+    int len = GetWindowTextLengthW(editBox);
+    std::wstring text(len, L'\0');
+    if (len > 0) GetWindowTextW(editBox, &text[0], len + 1);
+    return text;
+}
+// Them mot dong vao bang sinh vien (ListView).
+void themDongBangSinhVien(const SinhVien& sv) {
+    int row = ListView_GetItemCount(bangSinhVien);
+    LVITEMW item{};
+    item.mask = LVIF_TEXT;
+    item.iItem = row;
+    item.pszText = const_cast<wchar_t*>(sv.maSV.c_str());
+    SendMessageW(bangSinhVien, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
+    ListView_SetItemText(bangSinhVien, row, 1, const_cast<wchar_t*>(sv.hoTen.c_str()));
+    ListView_SetItemText(bangSinhVien, row, 2, const_cast<wchar_t*>(sv.maLop.c_str()));
+}
 void themSinhVien(HWND owner) {
-    // TODO: Validate input, store students, update bangSinhVien.
-    MessageBoxW(owner, L"Chua cai dat chuc nang them sinh vien.", L"DA-030", MB_OK);
+    SinhVien sv;
+    sv.maSV = docEdit(maSinhVien);
+    sv.hoTen = docEdit(hoTen);
+    sv.maLop = docEdit(maLop);
+    if (sv.maSV.empty() || sv.hoTen.empty() || sv.maLop.empty()) {
+        MessageBoxW(owner, L"Vui long nhap day du Ma SV, Ho ten, Ma lop.", L"DA-030", MB_OK | MB_ICONWARNING);
+        return;
+    }
+    // Kiem tra trung ma sinh vien.
+    for (const SinhVien& old : danhSach) {
+        if (old.maSV == sv.maSV) {
+            MessageBoxW(owner, L"Ma sinh vien nay da ton tai.", L"DA-030", MB_OK | MB_ICONWARNING);
+            return;
+        }
+    }
+    danhSach.push_back(sv);
+    themDongBangSinhVien(sv);
+    SetWindowTextW(maSinhVien, L"");
+    SetWindowTextW(hoTen, L"");
+    SetWindowTextW(maLop, L"");
+    SetFocus(maSinhVien);
+    MessageBoxW(owner, L"Da them sinh vien.", L"DA-030", MB_OK | MB_ICONINFORMATION);
 }
 void luuDiemDanh(HWND owner) {
     // TODO: Find student, store date/presence, update bangDiemDanh.
