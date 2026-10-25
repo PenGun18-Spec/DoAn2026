@@ -1,128 +1,192 @@
-// DA-030: Khung giao dien de tu phat trien tung chuc nang.
-// Visual Studio 2022: C++/CLI + Windows Forms, .NET Framework.
+// Native C++17 + Windows API. No C++/CLI or .NET required.
+#ifndef UNICODE
+#define UNICODE
+#endif
+#ifndef _UNICODE
+#define _UNICODE
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
-using namespace System;
-using namespace System::Drawing;
-using namespace System::Windows::Forms;
+#include <commctrl.h>
+#include <array>
 
-public ref class MainForm : Form {
-private:
-    TextBox^ maSinhVien;
-    TextBox^ hoTen;
-    TextBox^ maLop;
-    TextBox^ maDiemDanh;
-    DateTimePicker^ ngayHoc;
-    CheckBox^ coMat;
-    NumericUpDown^ topK;
-    DataGridView^ bangSinhVien;
-    DataGridView^ bangDiemDanh;
-    DataGridView^ bangXepHang;
+namespace {
+constexpr int ID_TABS = 100;
+constexpr int ID_ADD = 101, ID_SAVE = 102, ID_RANK = 103;
+HINSTANCE instance;
+HWND tabs;
+HFONT font;
+std::array<HWND, 3> pages{};
+HWND maSinhVien, hoTen, maLop, maDiemDanh, ngayHoc, coMat, topK;
+HWND bangSinhVien, bangDiemDanh, bangXepHang;
 
-    Label^ taoNhan(Control^ cha, String^ chu, int x, int y, int rong) {
-        Label^ n = gcnew Label();
-        n->Text = chu; n->Location = Point(x, y); n->Size = Drawing::Size(rong, 28);
-        cha->Controls->Add(n); return n;
+HWND control(HWND parent, const wchar_t* cls, const wchar_t* text,
+             DWORD style, int x, int y, int width, int height, int id = 0) {
+    HWND result = CreateWindowExW(0, cls, text, WS_CHILD | WS_VISIBLE | style,
+        x, y, width, height, parent, reinterpret_cast<HMENU>(static_cast<INT_PTR>(id)), instance, nullptr);
+    SendMessageW(result, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
+    return result;
+}
+void label(HWND page, const wchar_t* text, int x, int width) {
+    control(page, L"STATIC", text, 0, x, 24, width, 24);
+}
+HWND edit(HWND page, int x, int width) {
+    return control(page, L"EDIT", L"", WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL, x, 20, width, 26);
+}
+HWND table(HWND page, const wchar_t* const* columns, int count) {
+    HWND result = control(page, WC_LISTVIEWW, L"", WS_BORDER | LVS_REPORT | LVS_SINGLESEL,
+        18, 70, 925, 390);
+    ListView_SetExtendedListViewStyle(result, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+    for (int i = 0; i < count; ++i) {
+        LVCOLUMNW column{};
+        column.mask = LVCF_TEXT | LVCF_WIDTH;
+        column.pszText = const_cast<wchar_t*>(columns[i]);
+        column.cx = 900 / count;
+        SendMessageW(result, LVM_INSERTCOLUMNW, i, reinterpret_cast<LPARAM>(&column));
     }
-    TextBox^ taoO(Control^ cha, int x, int y, int rong) {
-        TextBox^ o = gcnew TextBox();
-        o->Location = Point(x, y); o->Width = rong;
-        cha->Controls->Add(o); return o;
+    return result;
+}
+void themSinhVien(HWND owner) {
+    // TODO: Validate input, store students, update bangSinhVien.
+    MessageBoxW(owner, L"Chua cai dat chuc nang them sinh vien.", L"DA-030", MB_OK);
+}
+void luuDiemDanh(HWND owner) {
+    // TODO: Find student, store date/presence, update bangDiemDanh.
+    MessageBoxW(owner, L"Chua cai dat chuc nang diem danh.", L"DA-030", MB_OK);
+}
+void xemXepHang(HWND owner) {
+    // TODO: Calculate scores and use an Order-Statistic Tree for Top K.
+    MessageBoxW(owner, L"Chua cai dat chuc nang xep hang.", L"DA-030", MB_OK);
+}
+LRESULT CALLBACK pageProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (message == WM_COMMAND) {
+        return SendMessageW(GetParent(window), message, wParam, lParam);
     }
-    Button^ taoNut(Control^ cha, String^ chu, int x, int y, int rong, EventHandler^ xuLy) {
-        Button^ nut = gcnew Button();
-        nut->Text = chu; nut->Location = Point(x, y); nut->Size = Drawing::Size(rong, 32);
-        nut->Click += xuLy; cha->Controls->Add(nut); return nut;
+    return DefWindowProcW(window, message, wParam, lParam);
+}
+void layout(HWND window) {
+    RECT area{};
+    GetClientRect(window, &area);
+    MoveWindow(tabs, 0, 0, area.right, area.bottom, TRUE);
+    TabCtrl_AdjustRect(tabs, FALSE, &area);
+    for (HWND page : pages) {
+        MoveWindow(page, area.left, area.top, area.right - area.left, area.bottom - area.top, TRUE);
     }
-    DataGridView^ taoBang(Control^ cha, array<String^>^ cot, int y) {
-        DataGridView^ bang = gcnew DataGridView();
-        bang->Location = Point(18, y); bang->Size = Drawing::Size(925, 390);
-        bang->Anchor = AnchorStyles::Top | AnchorStyles::Bottom | AnchorStyles::Left | AnchorStyles::Right;
-        bang->ReadOnly = true; bang->AllowUserToAddRows = false;
-        bang->RowHeadersVisible = false;
-        bang->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
-        for each (String^ tenCot in cot) bang->Columns->Add(tenCot, tenCot);
-        cha->Controls->Add(bang); return bang;
+    const HWND tables[] = {bangSinhVien, bangDiemDanh, bangXepHang};
+    for (int i = 0; i < 3; ++i) {
+        RECT client{};
+        GetClientRect(pages[i], &client);
+        int width = client.right > 36 ? client.right - 36 : 1;
+        int height = client.bottom > 88 ? client.bottom - 88 : 1;
+        MoveWindow(tables[i], 18, 70, width, height, TRUE);
+        int count = Header_GetItemCount(ListView_GetHeader(tables[i]));
+        for (int col = 0; col < count; ++col) ListView_SetColumnWidth(tables[i], col, (width - 4) / count);
     }
-
-    void themSinhVien(Object^, EventArgs^) {
-        // TODO 1: Kiem tra maSinhVien, hoTen, maLop.
-        // TODO 2: Luu sinh vien vao cau truc du lieu cua nhom.
-        // TODO 3: Cap nhat bangSinhVien.
-        MessageBox::Show("Chua cai dat chuc nang them sinh vien.");
+}
+void createUi(HWND window) {
+    font = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+    tabs = control(window, WC_TABCONTROLW, L"", WS_TABSTOP | WS_CLIPSIBLINGS, 0, 0, 100, 100, ID_TABS);
+    const wchar_t* names[] = {L"Sinh vien", L"Diem danh", L"Xep hang"};
+    for (int i = 0; i < 3; ++i) {
+        TCITEMW item{};
+        item.mask = TCIF_TEXT;
+        item.pszText = const_cast<wchar_t*>(names[i]);
+        SendMessageW(tabs, TCM_INSERTITEMW, i, reinterpret_cast<LPARAM>(&item));
+        pages[i] = control(window, L"DA030Page", L"", WS_CLIPCHILDREN, 0, 0, 100, 100);
+        ShowWindow(pages[i], i == 0 ? SW_SHOW : SW_HIDE);
     }
-    void luuDiemDanh(Object^, EventArgs^) {
-        // TODO 1: Tim sinh vien theo maDiemDanh->Text.
-        // TODO 2: Luu ngayHoc->Value va coMat->Checked.
-        // TODO 3: Cap nhat diem chuyen can va bangDiemDanh.
-        MessageBox::Show("Chua cai dat chuc nang diem danh.");
+    HWND p = pages[0];
+    label(p, L"Ma SV", 18, 60); maSinhVien = edit(p, 85, 130);
+    label(p, L"Ho ten", 232, 68); hoTen = edit(p, 304, 210);
+    label(p, L"Ma lop", 530, 65); maLop = edit(p, 598, 125);
+    control(p, L"BUTTON", L"Them SV", WS_TABSTOP, 742, 18, 120, 32, ID_ADD);
+    const wchar_t* studentColumns[] = {L"Ma SV", L"Ho ten", L"Ma lop"};
+    bangSinhVien = table(p, studentColumns, 3);
+    p = pages[1];
+    label(p, L"Ma SV", 18, 60); maDiemDanh = edit(p, 85, 130);
+    label(p, L"Ngay hoc", 232, 85);
+    ngayHoc = control(p, DATETIMEPICK_CLASSW, L"", WS_TABSTOP | DTS_SHORTDATEFORMAT, 320, 20, 150, 26);
+    coMat = control(p, L"BUTTON", L"Co mat", WS_TABSTOP | BS_AUTOCHECKBOX, 490, 20, 110, 26);
+    SendMessageW(coMat, BM_SETCHECK, BST_CHECKED, 0);
+    control(p, L"BUTTON", L"Luu diem danh", WS_TABSTOP, 630, 18, 150, 32, ID_SAVE);
+    const wchar_t* attendanceColumns[] = {L"Ma SV", L"Ngay hoc", L"Trang thai"};
+    bangDiemDanh = table(p, attendanceColumns, 3);
+    p = pages[2];
+    label(p, L"So sinh vien Top K", 18, 160);
+    topK = control(p, L"EDIT", L"1", WS_BORDER | WS_TABSTOP | ES_NUMBER, 184, 20, 110, 26);
+    HWND spin = control(p, UPDOWN_CLASSW, L"", UDS_ALIGNRIGHT | UDS_SETBUDDYINT | UDS_ARROWKEYS,
+        0, 0, 0, 0);
+    SendMessageW(spin, UDM_SETBUDDY, reinterpret_cast<WPARAM>(topK), 0);
+    SendMessageW(spin, UDM_SETRANGE32, 1, 1000);
+    SendMessageW(spin, UDM_SETPOS32, 0, 1);
+    control(p, L"BUTTON", L"Xem Top K", WS_TABSTOP, 320, 18, 130, 32, ID_RANK);
+    const wchar_t* rankingColumns[] = {L"Hang", L"Ma SV", L"Ho ten", L"Diem"};
+    bangXepHang = table(p, rankingColumns, 4);
+    layout(window);
+}
+LRESULT CALLBACK windowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) {
+    case WM_CREATE: createUi(window); return 0;
+    case WM_SIZE: if (tabs) layout(window); return 0;
+    case WM_GETMINMAXINFO: {
+        auto info = reinterpret_cast<MINMAXINFO*>(lParam);
+        info->ptMinTrackSize = POINT{1000, 560}; return 0;
     }
-    void xemXepHang(Object^, EventArgs^) {
-        // TODO 1: Tinh diem tong ket theo quy tac nhom thong nhat.
-        // TODO 2: Dung Order-Statistic Tree de lay Top K.
-        // TODO 3: Dien ket qua vao bangXepHang.
-        MessageBox::Show("Chua cai dat chuc nang xep hang.");
+    case WM_NOTIFY: {
+        auto header = reinterpret_cast<NMHDR*>(lParam);
+        if (header->hwndFrom == tabs && header->code == TCN_SELCHANGE) {
+            int selected = TabCtrl_GetCurSel(tabs);
+            for (int i = 0; i < 3; ++i) ShowWindow(pages[i], i == selected ? SW_SHOW : SW_HIDE);
+            SetFocus(tabs);
+        }
+        return 0;
     }
-
-public:
-    MainForm() {
-        Text = "DA-030 - Diem danh va xep hang hoc tap";
-        Size = Drawing::Size(1000, 660);
-        MinimumSize = Drawing::Size(850, 560);
-        StartPosition = FormStartPosition::CenterScreen;
-        Font = gcnew Drawing::Font("Segoe UI", 10);
-
-        TabControl^ tabs = gcnew TabControl();
-        tabs->Dock = DockStyle::Fill;
-        Controls->Add(tabs);
-
-        TabPage^ trangSinhVien = gcnew TabPage("Sinh vien");
-        TabPage^ trangDiemDanh = gcnew TabPage("Diem danh");
-        TabPage^ trangXepHang = gcnew TabPage("Xep hang");
-        tabs->TabPages->Add(trangSinhVien);
-        tabs->TabPages->Add(trangDiemDanh);
-        tabs->TabPages->Add(trangXepHang);
-
-        taoNhan(trangSinhVien, "Ma SV", 18, 22, 60);
-        maSinhVien = taoO(trangSinhVien, 85, 20, 130);
-        taoNhan(trangSinhVien, "Ho ten", 232, 22, 68);
-        hoTen = taoO(trangSinhVien, 304, 20, 210);
-        taoNhan(trangSinhVien, "Ma lop", 530, 22, 65);
-        maLop = taoO(trangSinhVien, 598, 20, 125);
-        taoNut(trangSinhVien, "Them SV", 742, 18, 120,
-            gcnew EventHandler(this, &MainForm::themSinhVien));
-        bangSinhVien = taoBang(trangSinhVien,
-            gcnew array<String^>{"Ma SV", "Ho ten", "Ma lop"}, 70);
-
-        taoNhan(trangDiemDanh, "Ma SV", 18, 22, 60);
-        maDiemDanh = taoO(trangDiemDanh, 85, 20, 130);
-        taoNhan(trangDiemDanh, "Ngay hoc", 232, 22, 85);
-        ngayHoc = gcnew DateTimePicker();
-        ngayHoc->Location = Point(320, 20); ngayHoc->Width = 150;
-        ngayHoc->Format = DateTimePickerFormat::Short;
-        trangDiemDanh->Controls->Add(ngayHoc);
-        coMat = gcnew CheckBox(); coMat->Text = "Co mat";
-        coMat->Location = Point(490, 20); coMat->Checked = true;
-        trangDiemDanh->Controls->Add(coMat);
-        taoNut(trangDiemDanh, "Luu diem danh", 630, 18, 150,
-            gcnew EventHandler(this, &MainForm::luuDiemDanh));
-        bangDiemDanh = taoBang(trangDiemDanh,
-            gcnew array<String^>{"Ma SV", "Ngay hoc", "Trang thai"}, 70);
-
-        taoNhan(trangXepHang, "So sinh vien Top K", 18, 22, 160);
-        topK = gcnew NumericUpDown();
-        topK->Location = Point(184, 20); topK->Minimum = 1; topK->Maximum = 1000;
-        trangXepHang->Controls->Add(topK);
-        taoNut(trangXepHang, "Xem Top K", 320, 18, 130,
-            gcnew EventHandler(this, &MainForm::xemXepHang));
-        bangXepHang = taoBang(trangXepHang,
-            gcnew array<String^>{"Hang", "Ma SV", "Ho ten", "Diem"}, 70);
+    case WM_COMMAND:
+        if (HIWORD(wParam) == BN_CLICKED) {
+            switch (LOWORD(wParam)) {
+            case ID_ADD: themSinhVien(window); break;
+            case ID_SAVE: luuDiemDanh(window); break;
+            case ID_RANK: xemXepHang(window); break;
+            }
+        }
+        return 0;
+    case WM_DESTROY: PostQuitMessage(0); return 0;
     }
-};
-
-[STAThreadAttribute]
-int main(array<String^>^) {
-    Application::EnableVisualStyles();
-    Application::SetCompatibleTextRenderingDefault(false);
-    Application::Run(gcnew MainForm());
-    return 0;
+    return DefWindowProcW(window, message, wParam, lParam);
+}
+}
+int WINAPI WinMain(HINSTANCE appInstance, HINSTANCE, LPSTR, int show) {
+    instance = appInstance;
+    INITCOMMONCONTROLSEX common{sizeof(INITCOMMONCONTROLSEX), ICC_TAB_CLASSES | ICC_LISTVIEW_CLASSES | ICC_DATE_CLASSES | ICC_UPDOWN_CLASS};
+    if (!InitCommonControlsEx(&common)) return 1;
+    WNDCLASSW pageClass{};
+    pageClass.lpfnWndProc = pageProc;
+    pageClass.hInstance = instance;
+    pageClass.lpszClassName = L"DA030Page";
+    pageClass.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+    pageClass.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1);
+    if (!RegisterClassW(&pageClass)) return 1;
+    WNDCLASSW windowClass = pageClass;
+    windowClass.lpfnWndProc = windowProc;
+    windowClass.lpszClassName = L"DA030Window";
+    if (!RegisterClassW(&windowClass)) return 1;
+    int x = (GetSystemMetrics(SM_CXSCREEN) - 1000) / 2;
+    int y = (GetSystemMetrics(SM_CYSCREEN) - 660) / 2;
+    HWND window = CreateWindowExW(0, windowClass.lpszClassName,
+        L"DA-030 - Diem danh va xep hang hoc tap", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+        x, y, 1000, 660, nullptr, nullptr, instance, nullptr);
+    if (!window) return 1;
+    ShowWindow(window, show);
+    UpdateWindow(window);
+    MSG message{};
+    int result;
+    while ((result = GetMessageW(&message, nullptr, 0, 0)) > 0) {
+        if (!IsDialogMessageW(window, &message)) {
+            TranslateMessage(&message);
+            DispatchMessageW(&message);
+        }
+    }
+    return result == -1 ? 1 : static_cast<int>(message.wParam);
 }
