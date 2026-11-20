@@ -1,79 +1,82 @@
-// DA-030: cac chuc nang nghiep vu.
-// Moi thao tac doc/ghi control deu di qua lop goi thu vien trong lib.cpp
-// (LayChuoi, ThemDong, LayNgay, DangChon, HienThongBao).
+// DA-030: cac chuc nang cua chuong trinh
 
 #include "common.h"
+#include "cautruc.h"
 
-#include <string>
-#include <vector>
+// Ba cau truc du lieu cua chuong trinh
+DanhSachDac danhSachDac;        // mang tinh
+DanhSachLienKet danhSachLienKet; // danh sach lien ket
+CayAVL cayXepHang;              // cay AVL + Order-Statistic Tree
 
-namespace {
+// Khoi tao ba cau truc, goi mot lan luc bat dau chuong trinh
+void KhoiTaoDuLieu() {
+    KhoiTaoDanhSachDac(&danhSachDac);
+    KhoiTaoDanhSachLienKet(&danhSachLienKet);
+    KhoiTaoCay(&cayXepHang);
+}
 
-// ---------------------------------------------------------------------------
-// Cai dat: cau truc du lieu cua nhom.
-// Giu trong mot khoi de nhom tu mo rong (lop SinhVien, danh sach diem danh...).
-// ---------------------------------------------------------------------------
-
-struct SinhVien {
-    std::wstring ma;
-    std::wstring hoTen;
-    std::wstring maLop;
-};
-
-// TODO: doi sang cay AVL / Order-Statistic Tree khi lam phan xep hang
-// de co Rank(x) va Select(k) thay vi sap xep lai toan bo.
-std::vector<SinhVien> gDanhSachSinhVien;
-
-}  // namespace
-
-// ---------------------------------------------------------------------------
-// Ba chuc nang chinh: giu nguyen khung TODO de nhom tu cai dat.
-// ---------------------------------------------------------------------------
-
+// Them mot sinh vien vao danh sach va vao bang
 void ThemSinhVien() {
-    // TODO 1: Kiem tra maSinhVien, hoTen, maLop.
-    SinhVien sv;
-    sv.ma = LayChuoi(g.maSinhVien);
-    sv.hoTen = LayChuoi(g.hoTen);
-    sv.maLop = LayChuoi(g.maLop);
+    wchar_t ma[MAX_CHU];
+    wchar_t ten[MAX_CHU];
+    wchar_t lop[MAX_CHU];
 
-    if (sv.ma.empty() || sv.hoTen.empty() || sv.maLop.empty()) {
-        HienCanhBao(g.cuaSo, L"Vui lòng nhập đầy đủ Mã SV, Họ tên, Mã lớp.");
+    DocO(maSinhVien, ma);
+    DocO(hoTen, ten);
+    DocO(maLop, lop);
+
+    // Kiem tra da nhap day du chua
+    if (wcslen(ma) == 0 || wcslen(ten) == 0 || wcslen(lop) == 0) {
+        CanhBao(L"Vui lòng nhập đầy đủ Mã SV, Họ tên, Mã lớp.");
         return;
     }
 
-    // Kiem tra trung ma sinh vien.
-    for (const SinhVien& cu : gDanhSachSinhVien) {
-        if (cu.ma == sv.ma) {
-            HienCanhBao(g.cuaSo, L"Mã sinh viên này đã tồn tại.");
-            return;
-        }
+    // Kiem tra trung ma sinh vien
+    if (TimDac(&danhSachDac, ma) != -1) {
+        CanhBao(L"Mã sinh viên này đã tồn tại.");
+        return;
     }
 
-    // TODO 2: Luu sinh vien vao cau truc du lieu cua nhom.
-    gDanhSachSinhVien.push_back(sv);
+    // Tao mot sinh vien moi
+    SinhVien sv;
+    wcscpy_s(sv.ma, ma);
+    wcscpy_s(sv.hoTen, ten);
+    wcscpy_s(sv.maLop, lop);
+    sv.soBuoiCoMat = 0;
+    sv.tongSoBuoi = 0;
+    sv.diem = 0;
 
-    // TODO 3: Cap nhat bangSinhVien.
-    ThemDong(g.bangSinhVien, {sv.ma.c_str(), sv.hoTen.c_str(), sv.maLop.c_str()});
+    // Luu vao ca ba cau truc du lieu
+    if (ThemDac(&danhSachDac, &sv) == 0) {
+        CanhBao(L"Danh sách sinh viên đã đầy.");
+        return;
+    }
+    ThemLienKet(&danhSachLienKet, &sv);
+    ThemCay(&cayXepHang, &sv);
 
-    DatChuoi(g.maSinhVien, L"");
-    DatChuoi(g.hoTen, L"");
-    DatChuoi(g.maLop, L"");
-    ChonO(g.maSinhVien);
+    // Them mot dong vao bang
+    ThemDong(bangSinhVien, ma, ten, lop, NULL);
 
-    HienThongBao(g.cuaSo, L"Đã thêm sinh viên.");
+    // Xoa cac o nhap va dua con tro ve o Ma SV
+    DatChuoi(maSinhVien, L"");
+    DatChuoi(hoTen, L"");
+    DatChuoi(maLop, L"");
+    ChonO(maSinhVien);
+
+    ThongBao(L"Đã thêm sinh viên.");
 }
 
+// Luu mot lan diem danh
 void LuuDiemDanh() {
-    // TODO 1: Tim sinh vien theo maDiemDanh.
-    // TODO 2: Luu ngayHoc va trang thai coMat.
-    // TODO 3: Cap nhat diem chuyen can va bangDiemDanh.
-    HienThongBao(g.cuaSo, L"Chưa cài đặt chức năng điểm danh.");
+    // TODO: Doc ma sinh vien, ngay hoc, trang thai co mat.
+    //       Cap nhat soBuoiCoMat / tongSoBuoi, tinh lai diem,
+    //       roi cap nhat lai cay xep hang.
+    ThongBao(L"Chưa cài đặt chức năng điểm danh.");
 }
 
+// Xem bang xep hang Top K
 void XemXepHang() {
-    // TODO 1: Tinh diem tong ket theo quy tac nhom thong nhat.
-    // TODO 2: Dung Order-Statistic Tree de lay Top K.
-    // TODO 3: Dien ket qua vao bangXepHang.
-    HienThongBao(g.cuaSo, L"Chưa cài đặt chức năng xếp hạng.");
+    // TODO: Doc K, dung Select(k) cua Order-Statistic Tree
+    //       de lay K nguoi diem cao nhat, dien vao bang xep hang.
+    ThongBao(L"Chưa cài đặt chức năng xếp hạng.");
 }

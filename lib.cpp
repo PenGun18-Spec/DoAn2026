@@ -1,173 +1,155 @@
-// DA-030: lop goi thu vien.
-// Tap trung moi loi goi Win32 API tho (CreateWindowExW, SendMessageW,
-// ListView_*, DateTime_*, SystemParametersInfoW...) de phan giao dien va
-// nghiep vu khong phai lam viec truc tiep voi API.
+// DA-030: cac ham tao control va doc/ghi du lieu
 
 #include "common.h"
 
-HINSTANCE hInst = nullptr;
-HFONT gFont = nullptr;
+HINSTANCE hInst = NULL;
+HFONT gFont = NULL;
 
+// Khoi tao cac thu vien Common Controls
 void KhoiTaoThuVien() {
-    INITCOMMONCONTROLSEX icc{};
+    INITCOMMONCONTROLSEX icc;
     icc.dwSize = sizeof(icc);
     icc.dwICC = ICC_WIN95_CLASSES | ICC_TAB_CLASSES | ICC_LISTVIEW_CLASSES |
                 ICC_DATE_CLASSES | ICC_UPDOWN_CLASS | ICC_STANDARD_CLASSES;
     InitCommonControlsEx(&icc);
 }
 
-// ---------------------------------------------------------------------------
-// Font.
-// ---------------------------------------------------------------------------
-
+// Tao font chu cho toan bo giao dien
 HFONT TaoFont() {
-    HDC manHinh = GetDC(nullptr);
-    int dpi = manHinh ? GetDeviceCaps(manHinh, LOGPIXELSY) : 96;
-    if (manHinh) ReleaseDC(nullptr, manHinh);
-
-    LOGFONTW lf{};
-    lf.lfHeight = -MulDiv(10, dpi, 72);
-    lf.lfWeight = FW_NORMAL;
-    lf.lfCharSet = DEFAULT_CHARSET;
-    lstrcpyW(lf.lfFaceName, L"Segoe UI");
-    return CreateFontIndirectW(&lf);
+    return CreateFontW(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+                       DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                       DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
+                       L"Segoe UI");
 }
 
-void HuyFont() {
-    if (gFont) {
-        DeleteObject(gFont);
-        gFont = nullptr;
-    }
+// Gan font cho mot control
+void DatFont(HWND h) {
+    SendMessageW(h, WM_SETFONT, (WPARAM)gFont, TRUE);
 }
 
-void DatFont(HWND dieuKhien) {
-    if (dieuKhien && gFont) SendMessageW(dieuKhien, WM_SETFONT, (WPARAM)gFont, TRUE);
-}
+// ===== Tao control =====
 
-// ---------------------------------------------------------------------------
-// Tao control.
-// ---------------------------------------------------------------------------
-
+// Tao mot nhan (chu hien thi)
 HWND TaoNhan(HWND cha, const wchar_t* chu, int x, int y, int rong) {
-    HWND nhan = CreateWindowExW(0, L"STATIC", chu, WS_CHILD | WS_VISIBLE | SS_LEFT,
-                                x, y, rong, 28, cha, nullptr, hInst, nullptr);
-    DatFont(nhan);
-    return nhan;
+    HWND h = CreateWindowExW(0, L"STATIC", chu, WS_CHILD | WS_VISIBLE,
+                             x, y, rong, 28, cha, NULL, hInst, NULL);
+    DatFont(h);
+    return h;
 }
 
+// Tao mot o nhap
 HWND TaoO(HWND cha, int id, int x, int y, int rong) {
-    HWND o = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"",
+    // Ep id qua INT_PTR truoc khi ep sang HMENU, neu khong se loi tren ban x64
+    HWND h = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"",
                              WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
-                             x, y, rong, 26, cha, (HMENU)(INT_PTR)id, hInst, nullptr);
-    DatFont(o);
-    return o;
+                             x, y, rong, 26, cha, (HMENU)(INT_PTR)id, hInst, NULL);
+    DatFont(h);
+    return h;
 }
 
+// Tao mot nut bam
 HWND TaoNut(HWND cha, int id, const wchar_t* chu, int x, int y, int rong) {
-    HWND nut = CreateWindowExW(0, L"BUTTON", chu, WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-                               x, y, rong, 32, cha, (HMENU)(INT_PTR)id, hInst, nullptr);
-    DatFont(nut);
-    return nut;
+    HWND h = CreateWindowExW(0, L"BUTTON", chu,
+                             WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+                             x, y, rong, 32, cha, (HMENU)(INT_PTR)id, hInst, NULL);
+    DatFont(h);
+    return h;
 }
 
-HWND TaoBang(HWND cha, int id, std::initializer_list<const wchar_t*> cot, int y) {
+// Them mot cot vao bang
+void ThemCot(HWND bang, int chiSo, const wchar_t* ten) {
+    LVCOLUMNW c = {0};
+    c.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+    c.pszText = (wchar_t*)ten;
+    c.cx = 200;
+    c.iSubItem = chiSo;
+    ListView_InsertColumn(bang, chiSo, &c);
+}
+
+// Tao mot bang (ListView). Cot nao khong dung thi truyen NULL.
+HWND TaoBang(HWND cha, int id, const wchar_t* cot0, const wchar_t* cot1,
+             const wchar_t* cot2, const wchar_t* cot3, int y) {
     HWND bang = CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW, L"",
-                                WS_CHILD | WS_VISIBLE | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                                kBangX, y, 925, 390, cha, (HMENU)(INT_PTR)id, hInst, nullptr);
+                                WS_CHILD | WS_VISIBLE | WS_TABSTOP |
+                                LVS_REPORT | LVS_SINGLESEL,
+                                18, y, 900, 380, cha, (HMENU)(INT_PTR)id,
+                                hInst, NULL);
     ListView_SetExtendedListViewStyle(bang, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-    int chiSo = 0;
-    for (const wchar_t* tenCot : cot) {
-        LVCOLUMNW c{};
-        c.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
-        c.pszText = const_cast<wchar_t*>(tenCot);
-        c.cx = 200;
-        c.iSubItem = chiSo++;
-        ListView_InsertColumn(bang, c.iSubItem, &c);
-    }
+    ThemCot(bang, 0, cot0);
+    if (cot1) ThemCot(bang, 1, cot1);
+    if (cot2) ThemCot(bang, 2, cot2);
+    if (cot3) ThemCot(bang, 3, cot3);
 
     DatFont(bang);
     return bang;
 }
 
-// ---------------------------------------------------------------------------
-// Doc/ghi du lieu tren control.
-// ---------------------------------------------------------------------------
+// ===== Doc va ghi du lieu =====
 
-std::wstring LayChuoi(HWND o) {
-    if (!o) return std::wstring();
-
-    int doDai = GetWindowTextLengthW(o);
-    if (doDai <= 0) return std::wstring();
-
-    std::wstring chu(static_cast<size_t>(doDai) + 1, L'\0');
-    int docDuoc = GetWindowTextW(o, chu.data(), doDai + 1);
-    chu.resize(docDuoc > 0 ? static_cast<size_t>(docDuoc) : 0);
-    return chu;
+// Doc chu trong mot o nhap ra ketQua
+void DocO(HWND o, wchar_t* ketQua) {
+    ketQua[0] = L'\0';
+    if (o) GetWindowTextW(o, ketQua, MAX_CHU);
 }
 
-// Ghi chuoi vao o nhap (EDIT).
+// Ghi chu vao mot o nhap
 void DatChuoi(HWND o, const wchar_t* chu) {
-    if (o) SetWindowTextW(o, chu ? chu : L"");
+    if (o) SetWindowTextW(o, chu);
 }
 
-// Chuyen focus ve o nhap de nhap tiep.
+// Dua con tro nhap ve o
 void ChonO(HWND o) {
     if (o) SetFocus(o);
 }
 
-// Them mot dong vao ListView bao cao: phan tu dau la cot 0, con lai la subitem.
-void ThemDong(HWND bang, std::initializer_list<const wchar_t*> giaTri) {
-    if (!bang || giaTri.size() == 0) return;
-
+// Them mot dong vao bang. Cot nao khong dung thi truyen NULL.
+void ThemDong(HWND bang, const wchar_t* cot0, const wchar_t* cot1,
+              const wchar_t* cot2, const wchar_t* cot3) {
     int dong = ListView_GetItemCount(bang);
-    auto it = giaTri.begin();
 
-    LVITEMW muc{};
+    LVITEMW muc = {0};
     muc.mask = LVIF_TEXT;
     muc.iItem = dong;
     muc.iSubItem = 0;
-    muc.pszText = const_cast<wchar_t*>(*it++);
+    muc.pszText = (wchar_t*)cot0;
     ListView_InsertItem(bang, &muc);
 
-    int cot = 1;
-    for (; it != giaTri.end(); ++it, ++cot) {
-        ListView_SetItemText(bang, dong, cot, const_cast<wchar_t*>(*it));
-    }
+    if (cot1) ListView_SetItemText(bang, dong, 1, (wchar_t*)cot1);
+    if (cot2) ListView_SetItemText(bang, dong, 2, (wchar_t*)cot2);
+    if (cot3) ListView_SetItemText(bang, dong, 3, (wchar_t*)cot3);
 }
 
+// Lay ngay dang chon trong DateTimePicker
 SYSTEMTIME LayNgay(HWND chonNgay) {
-    SYSTEMTIME ngay{};
-    if (chonNgay) DateTime_GetSystemtime(chonNgay, &ngay);
+    SYSTEMTIME ngay = {0};
+    DateTime_GetSystemtime(chonNgay, &ngay);
     return ngay;
 }
 
+// Kiem tra CheckBox co duoc danh dau khong
 bool DangChon(HWND hopKiem) {
-    return hopKiem && SendMessageW(hopKiem, BM_GETCHECK, 0, 0) == BST_CHECKED;
+    return SendMessageW(hopKiem, BM_GETCHECK, 0, 0) == BST_CHECKED;
 }
 
-void HienThongBao(HWND cha, const wchar_t* chu) {
-    MessageBoxW(cha, chu, kTieuDe, MB_OK | MB_ICONINFORMATION);
+// Hien hop thoai thong bao
+void ThongBao(const wchar_t* chu) {
+    MessageBoxW(cuaSo, chu, L"DA-030", MB_OK | MB_ICONINFORMATION);
 }
 
-void HienCanhBao(HWND cha, const wchar_t* chu) {
-    MessageBoxW(cha, chu, kTieuDe, MB_OK | MB_ICONWARNING);
+// Hien hop thoai canh bao
+void CanhBao(const wchar_t* chu) {
+    MessageBoxW(cuaSo, chu, L"DA-030", MB_OK | MB_ICONWARNING);
 }
 
-// ---------------------------------------------------------------------------
-// Cua so.
-// ---------------------------------------------------------------------------
-
-void CanGiuaCuaSo(HWND cuaSo) {
-    RECT rc{};
-    GetWindowRect(cuaSo, &rc);
-
-    RECT vung{};
-    SystemParametersInfoW(SPI_GETWORKAREA, 0, &vung, 0);
-
+// Dat cua so ra giua man hinh
+void CanGiuaCuaSo(HWND h) {
+    RECT rc;
+    GetWindowRect(h, &rc);
     int rong = rc.right - rc.left;
     int cao = rc.bottom - rc.top;
-    int x = vung.left + ((vung.right - vung.left) - rong) / 2;
-    int y = vung.top + ((vung.bottom - vung.top) - cao) / 2;
-    SetWindowPos(cuaSo, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    int manRong = GetSystemMetrics(SM_CXSCREEN);
+    int manCao = GetSystemMetrics(SM_CYSCREEN);
+    SetWindowPos(h, NULL, (manRong - rong) / 2, (manCao - cao) / 2, 0, 0,
+                 SWP_NOSIZE | SWP_NOZORDER);
 }
