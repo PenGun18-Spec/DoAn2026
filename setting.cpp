@@ -3,6 +3,9 @@
 #include "common.h"
 #include "cautruc.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 // Ba cau truc du lieu cua chuong trinh
 DanhSachDac danhSachDac;        // mang tinh
 DanhSachLienKet danhSachLienKet; // danh sach lien ket
@@ -68,15 +71,101 @@ void ThemSinhVien() {
 
 // Luu mot lan diem danh
 void LuuDiemDanh() {
-    // TODO: Doc ma sinh vien, ngay hoc, trang thai co mat.
-    //       Cap nhat soBuoiCoMat / tongSoBuoi, tinh lai diem,
-    //       roi cap nhat lai cay xep hang.
-    ThongBao(L"Chưa cài đặt chức năng điểm danh.");
+    wchar_t ma[MAX_CHU];
+    DocO(maDiemDanh, ma);
+
+    // Kiem tra da nhap ma sinh vien chua
+    if (wcslen(ma) == 0) {
+        CanhBao(L"Vui lòng nhập Mã SV cần điểm danh.");
+        return;
+    }
+
+    // Tim sinh vien trong danh sach
+    int viTri = TimDac(&danhSachDac, ma);
+    if (viTri == -1) {
+        CanhBao(L"Không tìm thấy sinh viên có mã này.");
+        return;
+    }
+
+    // Lay ngay hoc va trang thai co mat
+    SYSTEMTIME ngay = LayNgay(ngayHoc);
+    bool coMatHomNay = DangChon(coMat);
+
+    // Cap nhat so buoi
+    SinhVien* sv = &danhSachDac.ds[viTri];
+    sv->tongSoBuoi++;
+    if (coMatHomNay) {
+        sv->soBuoiCoMat++;
+    }
+
+    // Tinh lai diem: ti le chuyen can * 10
+    sv->diem = (double)sv->soBuoiCoMat / (double)sv->tongSoBuoi * 10.0;
+
+    // Diem da doi nen phai cap nhat lai trong cay xep hang
+    CapNhatCay(&cayXepHang, sv);
+
+    // Hien ket qua len bang diem danh
+    wchar_t ngayChu[MAX_CHU];
+    swprintf_s(ngayChu, L"%02d/%02d/%04d", ngay.wDay, ngay.wMonth, ngay.wYear);
+
+    wchar_t trangThai[MAX_CHU];
+    if (coMatHomNay) {
+        wcscpy_s(trangThai, L"Có mặt");
+    } else {
+        wcscpy_s(trangThai, L"Vắng");
+    }
+
+    ThemDong(bangDiemDanh, sv->ma, ngayChu, trangThai, NULL);
+
+    // Xoa o nhap va dua con tro ve
+    DatChuoi(maDiemDanh, L"");
+    ChonO(maDiemDanh);
+
+    ThongBao(L"Đã lưu điểm danh.");
 }
 
 // Xem bang xep hang Top K
 void XemXepHang() {
-    // TODO: Doc K, dung Select(k) cua Order-Statistic Tree
-    //       de lay K nguoi diem cao nhat, dien vao bang xep hang.
-    ThongBao(L"Chưa cài đặt chức năng xếp hạng.");
+    // Doc so K
+    int k = LaySo(topKEdit);
+    if (k < 1) {
+        CanhBao(L"Số K phải lớn hơn 0.");
+        return;
+    }
+
+    if (cayXepHang.soLuong == 0) {
+        CanhBao(L"Chưa có sinh viên nào trong danh sách.");
+        return;
+    }
+
+    // Neu K lon hon so sinh vien thi chi lay het danh sach
+    if (k > cayXepHang.soLuong) {
+        k = cayXepHang.soLuong;
+    }
+
+    // Xoa bang cu truoc khi dien ket qua moi
+    XoaBang(bangXepHang);
+
+    // Dung Select(k) cua Order-Statistic Tree de lay tung nguoi
+    // Khong can sap xep lai danh sach, moi lan lay chi ton O(log n)
+    for (int hang = 1; hang <= k; hang++) {
+        NutAVL* nut = Select(&cayXepHang, hang);
+        if (nut == NULL) {
+            break;
+        }
+
+        // Doi so hang va diem ra chuoi
+        wchar_t hangChu[MAX_CHU];
+        swprintf_s(hangChu, L"%d", hang);
+
+        wchar_t diemChu[MAX_CHU];
+        swprintf_s(diemChu, L"%.2f", nut->sv.diem);
+
+        ThemDong(bangXepHang, hangChu, nut->sv.ma, nut->sv.hoTen, diemChu);
+    }
+
+    // Bao ket qua
+    wchar_t thongBao[MAX_CHU];
+    swprintf_s(thongBao, L"Đã hiển thị Top %d sinh viên.", k);
+    ThongBao(thongBao);
 }

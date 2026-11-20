@@ -2,6 +2,8 @@
 
 #include "common.h"
 
+#include <stdlib.h>
+
 HINSTANCE hInst = NULL;
 HFONT gFont = NULL;
 
@@ -98,6 +100,13 @@ void DatChuoi(HWND o, const wchar_t* chu) {
     if (o) SetWindowTextW(o, chu);
 }
 
+// Doc mot so nguyen trong o nhap, khong doc duoc thi tra 0
+int LaySo(HWND o) {
+    wchar_t chu[MAX_CHU];
+    DocO(o, chu);
+    return _wtoi(chu);
+}
+
 // Dua con tro nhap ve o
 void ChonO(HWND o) {
     if (o) SetFocus(o);
@@ -118,6 +127,11 @@ void ThemDong(HWND bang, const wchar_t* cot0, const wchar_t* cot1,
     if (cot1) ListView_SetItemText(bang, dong, 1, (wchar_t*)cot1);
     if (cot2) ListView_SetItemText(bang, dong, 2, (wchar_t*)cot2);
     if (cot3) ListView_SetItemText(bang, dong, 3, (wchar_t*)cot3);
+}
+
+// Xoa het cac dong trong bang
+void XoaBang(HWND bang) {
+    ListView_DeleteAllItems(bang);
 }
 
 // Lay ngay dang chon trong DateTimePicker

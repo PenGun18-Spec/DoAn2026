@@ -366,6 +366,17 @@ int XoaCay(CayAVL* c, const wchar_t* ma) {
     return daXoa;
 }
 
+// Cap nhat lai mot sinh vien trong cay khi diem thay doi.
+// Cay sap theo diem nen khong the sua truc tiep trong nut duoc,
+// phai xoa nut cu ra roi chen lai voi diem moi.
+// Tra ve 1 neu cap nhat duoc.
+int CapNhatCay(CayAVL* c, const SinhVien* sv) {
+    if (XoaCay(c, sv->ma) == 0) {
+        return 0;                       // khong tim thay sinh vien
+    }
+    return ThemCay(c, sv);
+}
+
 // Giai phong toan bo nut cua cay con
 void XoaHetNut(NutAVL* p) {
     if (p == NULL) {

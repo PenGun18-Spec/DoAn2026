@@ -77,9 +77,11 @@ HWND TaoBang(HWND cha, int id, const wchar_t* cot0, const wchar_t* cot1,
 
 void DocO(HWND o, wchar_t* ketQua);
 void DatChuoi(HWND o, const wchar_t* chu);
+int  LaySo(HWND o);                         // doc mot so nguyen tu o nhap
 void ChonO(HWND o);
 void ThemDong(HWND bang, const wchar_t* cot0, const wchar_t* cot1,
               const wchar_t* cot2, const wchar_t* cot3);
+void XoaBang(HWND bang);                    // xoa het dong trong bang
 SYSTEMTIME LayNgay(HWND chonNgay);
 bool DangChon(HWND hopKiem);
 void ThongBao(const wchar_t* chu);

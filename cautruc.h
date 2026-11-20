@@ -93,6 +93,7 @@ NutAVL* NutNhoNhat(NutAVL* p);
 int  ThemCay(CayAVL* c, const SinhVien* sv);        // chen theo diem
 int  TimCay(CayAVL* c, const wchar_t* ma);          // 1 neu co
 int  XoaCay(CayAVL* c, const wchar_t* ma);          // 1 neu xoa duoc
+int  CapNhatCay(CayAVL* c, const SinhVien* sv);     // diem doi: xoa roi chen lai
 void XoaToanBoCay(CayAVL* c);
 
 // ----- Order-Statistic Tree -----
