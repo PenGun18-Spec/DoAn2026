@@ -1,8 +1,3 @@
-// DA-030: khai bao dung chung cho ba file .cpp
-//   lib.cpp     : cac ham tao control va doc/ghi du lieu
-//   setting.cpp : cac chuc nang (them SV, diem danh, xep hang)
-//   Main.cpp    : giao dien va diem vao chuong trinh
-
 #pragma once
 
 #ifndef UNICODE
@@ -31,6 +26,7 @@ const int IDC_MA_LOP = 103;
 const int IDC_BTN_THEM_SV = 104;
 const int IDC_BANG_SINH_VIEN = 105;
 const int IDC_BTN_XOA_SV = 106;
+const int IDC_BTN_SUA_SV = 107;
 
 const int IDC_MA_DIEM_DANH = 110;
 const int IDC_NGAY_HOC = 111;
@@ -95,5 +91,6 @@ void CanGiuaCuaSo(HWND h);
 void KhoiTaoDuLieu();
 void ThemSinhVien();
 void XoaSinhVien();
+void SuaSinhVien();
 void LuuDiemDanh();
 void XemXepHang();

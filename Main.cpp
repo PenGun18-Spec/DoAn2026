@@ -13,19 +13,20 @@ HWND topKEdit = NULL, bangXepHang = NULL;
 
 // ===== Tao giao dien tung trang =====
 
-// Trang Sinh vien: ba o nhap, nut Them SV, bang
+// Trang Sinh vien: ba o nhap, ba nut Them/Xoa/Sua, bang
 void TaoTrangSinhVien(HWND p) {
-    TaoNhan(p, L"Mã SV", 18, 22, 60);
-    maSinhVien = TaoO(p, IDC_MA_SV, 85, 20, 130);
+    TaoNhan(p, L"Mã SV", 18, 22, 55);
+    maSinhVien = TaoO(p, IDC_MA_SV, 78, 20, 110);
 
-    TaoNhan(p, L"Họ tên", 232, 22, 68);
-    hoTen = TaoO(p, IDC_HO_TEN, 304, 20, 210);
+    TaoNhan(p, L"Họ tên", 200, 22, 58);
+    hoTen = TaoO(p, IDC_HO_TEN, 262, 20, 150);
 
-    TaoNhan(p, L"Mã lớp", 530, 22, 65);
-    maLop = TaoO(p, IDC_MA_LOP, 598, 20, 125);
+    TaoNhan(p, L"Mã lớp", 424, 22, 58);
+    maLop = TaoO(p, IDC_MA_LOP, 486, 20, 90);
 
-    TaoNut(p, IDC_BTN_THEM_SV, L"Thêm SV", 640, 18, 110);
-    TaoNut(p, IDC_BTN_XOA_SV, L"Xóa SV", 760, 18, 100);
+    TaoNut(p, IDC_BTN_THEM_SV, L"Thêm", 590, 18, 85);
+    TaoNut(p, IDC_BTN_XOA_SV, L"Xóa", 682, 18, 85);
+    TaoNut(p, IDC_BTN_SUA_SV, L"Sửa", 774, 18, 85);
 
     bangSinhVien = TaoBang(p, IDC_BANG_SINH_VIEN,
                            L"Mã SV", L"Họ tên", L"Mã lớp", NULL, 70);
@@ -154,14 +155,12 @@ void HienTrang(int chiSo) {
 
 // ===== Xu ly su kien =====
 
-// Xu ly khi bam nut
-// Chi xu ly khi bam chuot (BN_CLICKED); bo qua BN_SETFOCUS,
-// neu khong moi lan bam nut se chay ham hai lan.
 void XuLyLenh(WORD id, WORD thongBao) {
     if (thongBao != BN_CLICKED) return;
 
     if (id == IDC_BTN_THEM_SV) ThemSinhVien();
     else if (id == IDC_BTN_XOA_SV) XoaSinhVien();
+    else if (id == IDC_BTN_SUA_SV) SuaSinhVien();
     else if (id == IDC_BTN_LUU_DIEM_DANH) LuuDiemDanh();
     else if (id == IDC_BTN_XEM_TOP_K) XemXepHang();
 }

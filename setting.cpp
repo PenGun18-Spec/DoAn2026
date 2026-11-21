@@ -140,6 +140,64 @@ void XoaSinhVien() {
     ThongBao(L"Đã xóa sinh viên.");
 }
 
+// Sua thong tin mot sinh vien (ho ten va ma lop)
+// Ma sinh vien la khoa lien ket ca ba cau truc nen khong cho doi ma
+void SuaSinhVien() {
+    wchar_t ma[MAX_CHU];
+    wchar_t ten[MAX_CHU];
+    wchar_t lop[MAX_CHU];
+
+    DocO(maSinhVien, ma);
+    DocO(hoTen, ten);
+    DocO(maLop, lop);
+
+    // Kiem tra da nhap ma chua
+    if (wcslen(ma) == 0) {
+        CanhBao(L"Vui lòng nhập Mã SV cần sửa.");
+        return;
+    }
+
+    // Thong tin moi phai day du
+    if (wcslen(ten) == 0 || wcslen(lop) == 0) {
+        CanhBao(L"Vui lòng nhập Họ tên và Mã lớp mới.");
+        return;
+    }
+
+    // Tim sinh vien trong danh sach
+    int viTri = TimDac(&danhSachDac, ma);
+    if (viTri == -1) {
+        CanhBao(L"Không tìm thấy sinh viên có mã này.");
+        return;
+    }
+
+    // Sua trong danh sach dac
+    SinhVien* sv = &danhSachDac.ds[viTri];
+    wcscpy_s(sv->hoTen, ten);
+    wcscpy_s(sv->maLop, lop);
+
+    // Sua trong danh sach lien ket
+    NutLienKet* nut = TimLienKet(&danhSachLienKet, ma);
+    if (nut != NULL) {
+        wcscpy_s(nut->sv.hoTen, ten);
+        wcscpy_s(nut->sv.maLop, lop);
+    }
+
+    // Sua trong cay xep hang (diem khong doi nhung ten trong nut phai cap nhat)
+    CapNhatCay(&cayXepHang, sv);
+
+    // Cap nhat lai dong trong bang: xoa dong cu roi them dong moi
+    XoaDongTheoMa(bangSinhVien, ma);
+    ThemDong(bangSinhVien, sv->ma, sv->hoTen, sv->maLop, NULL);
+
+    // Xoa cac o nhap va dua con tro ve
+    DatChuoi(maSinhVien, L"");
+    DatChuoi(hoTen, L"");
+    DatChuoi(maLop, L"");
+    ChonO(maSinhVien);
+
+    ThongBao(L"Đã sửa thông tin sinh viên.");
+}
+
 // Luu mot lan diem danh
 void LuuDiemDanh() {
     wchar_t ma[MAX_CHU];
