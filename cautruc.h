@@ -101,3 +101,33 @@ void XoaToanBoCay(CayAVL* c);
 // sinh vien de thu tu duoc xac dinh ro rang.
 NutAVL* Select(CayAVL* c, int k);                   // nguoi thu k (1..n), NULL neu ngoai
 int     Rank(CayAVL* c, double diem);               // hang cua mot muc diem, 0 neu khong co
+
+// ===========================================================================
+// 4. LICH SU DIEM DANH
+// ===========================================================================
+// Moi lan bam "Luu diem danh" sinh ra mot ban ghi: ai, ngay nao, co mat hay vang.
+// Nho lich su nay ma:
+//   - Chan duoc viec diem danh trung mot nguoi trong cung mot ngay
+//   - Dem duoc tong so buoi cua ca lop (mau so de tinh diem chuyen can)
+// ===========================================================================
+
+const int MAX_DIEM_DANH = 1000;     // so ban ghi toi da
+
+struct BanGhiDiemDanh {
+    wchar_t ma[MAX_CHU];            // ma sinh vien
+    int ngay;                       // ngay hoc (1..31)
+    int thang;                      // thang hoc (1..12)
+    int nam;                        // nam hoc
+    int coMat;                      // 1 = co mat, 0 = vang
+};
+
+struct LichSuDiemDanh {
+    BanGhiDiemDanh ds[MAX_DIEM_DANH];
+    int soLuong;
+};
+
+void KhoiTaoLichSu(LichSuDiemDanh* l);
+int  DaDiemDanh(LichSuDiemDanh* l, const wchar_t* ma, int ngay, int thang, int nam);
+int  ThemBanGhi(LichSuDiemDanh* l, const wchar_t* ma, int ngay, int thang, int nam, int coMat);
+int  DemTongBuoiCuaLop(LichSuDiemDanh* l);          // so buoi hoc da diem danh
+int  DemBuoiCoMatCuaSV(LichSuDiemDanh* l, const wchar_t* ma);

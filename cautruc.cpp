@@ -451,3 +451,87 @@ int Rank(CayAVL* c, double diem) {
 
     return 0;                           // khong co diem nay trong cay
 }
+
+// ===========================================================================
+// 4. LICH SU DIEM DANH
+// ===========================================================================
+
+// Ban dau chua co ban ghi nao
+void KhoiTaoLichSu(LichSuDiemDanh* l) {
+    l->soLuong = 0;
+}
+
+// Kiem tra mot sinh vien da duoc diem danh trong ngay do chua
+// Tra ve 1 neu da co, 0 neu chua
+int DaDiemDanh(LichSuDiemDanh* l, const wchar_t* ma, int ngay, int thang, int nam) {
+    for (int i = 0; i < l->soLuong; i++) {
+        BanGhiDiemDanh* b = &l->ds[i];
+
+        int cungMa = (wcscmp(b->ma, ma) == 0);
+        int cungNgay = (b->ngay == ngay && b->thang == thang && b->nam == nam);
+
+        if (cungMa && cungNgay) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Them mot ban ghi diem danh, tra ve 1 neu them duoc
+int ThemBanGhi(LichSuDiemDanh* l, const wchar_t* ma, int ngay, int thang, int nam, int coMat) {
+    if (l->soLuong >= MAX_DIEM_DANH) {
+        return 0;                       // lich su da day
+    }
+
+    BanGhiDiemDanh* b = &l->ds[l->soLuong];
+
+    wcscpy_s(b->ma, ma);
+    b->ngay = ngay;
+    b->thang = thang;
+    b->nam = nam;
+    b->coMat = coMat;
+
+    l->soLuong++;
+    return 1;
+}
+
+// Dem tong so buoi hoc da diem danh cua ca lop
+// Mot buoi = mot cap (ngay, thang, nam) xuat hien trong lich su
+// Day la mau so dung de tinh ti le chuyen can
+int DemTongBuoiCuaLop(LichSuDiemDanh* l) {
+    int dem = 0;
+
+    for (int i = 0; i < l->soLuong; i++) {
+        BanGhiDiemDanh* b = &l->ds[i];
+
+        // Kiem tra buoi nay da duoc dem chua (cac ban ghi cung ngay nam truoc)
+        int daDem = 0;
+        for (int j = 0; j < i; j++) {
+            BanGhiDiemDanh* truoc = &l->ds[j];
+            if (truoc->ngay == b->ngay && truoc->thang == b->thang && truoc->nam == b->nam) {
+                daDem = 1;
+                break;
+            }
+        }
+
+        if (daDem == 0) {
+            dem++;
+        }
+    }
+
+    return dem;
+}
+
+// Dem so buoi co mat cua mot sinh vien
+int DemBuoiCoMatCuaSV(LichSuDiemDanh* l, const wchar_t* ma) {
+    int dem = 0;
+
+    for (int i = 0; i < l->soLuong; i++) {
+        BanGhiDiemDanh* b = &l->ds[i];
+        if (wcscmp(b->ma, ma) == 0 && b->coMat == 1) {
+            dem++;
+        }
+    }
+
+    return dem;
+}

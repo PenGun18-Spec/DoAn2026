@@ -10,12 +10,14 @@
 DanhSachDac danhSachDac;        // mang tinh
 DanhSachLienKet danhSachLienKet; // danh sach lien ket
 CayAVL cayXepHang;              // cay AVL + Order-Statistic Tree
+LichSuDiemDanh lichSu;          // lich su cac lan diem danh
 
 // Khoi tao ba cau truc, goi mot lan luc bat dau chuong trinh
 void KhoiTaoDuLieu() {
     KhoiTaoDanhSachDac(&danhSachDac);
     KhoiTaoDanhSachLienKet(&danhSachLienKet);
     KhoiTaoCay(&cayXepHang);
+    KhoiTaoLichSu(&lichSu);
 }
 
 // Them mot sinh vien vao danh sach va vao bang
@@ -91,15 +93,36 @@ void LuuDiemDanh() {
     SYSTEMTIME ngay = LayNgay(ngayHoc);
     bool coMatHomNay = DangChon(coMat);
 
-    // Cap nhat so buoi
-    SinhVien* sv = &danhSachDac.ds[viTri];
-    sv->tongSoBuoi++;
-    if (coMatHomNay) {
-        sv->soBuoiCoMat++;
+    // Chan diem danh trung: mot sinh vien chi duoc diem danh mot lan trong mot ngay
+    if (DaDiemDanh(&lichSu, ma, ngay.wDay, ngay.wMonth, ngay.wYear) == 1) {
+        CanhBao(L"Sinh viên này đã được điểm danh trong ngày này.");
+        return;
     }
 
-    // Tinh lai diem: ti le chuyen can * 10
-    sv->diem = (double)sv->soBuoiCoMat / (double)sv->tongSoBuoi * 10.0;
+    // Luu ban ghi vao lich su
+    int coMatSo = 0;
+    if (coMatHomNay) {
+        coMatSo = 1;
+    }
+
+    if (ThemBanGhi(&lichSu, ma, ngay.wDay, ngay.wMonth, ngay.wYear, coMatSo) == 0) {
+        CanhBao(L"Lịch sử điểm danh đã đầy.");
+        return;
+    }
+
+    // Cap nhat so buoi cua sinh vien va tinh lai diem
+    SinhVien* sv = &danhSachDac.ds[viTri];
+
+    sv->soBuoiCoMat = DemBuoiCoMatCuaSV(&lichSu, ma);
+    sv->tongSoBuoi = DemTongBuoiCuaLop(&lichSu);
+
+    // Diem = so buoi co mat / tong so buoi cua LOP * 10
+    // Dung tong so buoi cua lop lam mau so de moi sinh vien duoc so sanh cong bang
+    if (sv->tongSoBuoi > 0) {
+        sv->diem = (double)sv->soBuoiCoMat / (double)sv->tongSoBuoi * 10.0;
+    } else {
+        sv->diem = 0;
+    }
 
     // Diem da doi nen phai cap nhat lai trong cay xep hang
     CapNhatCay(&cayXepHang, sv);
