@@ -89,7 +89,10 @@ void TinhLaiDiemTatCa() {
         }
 
         // Diem co the doi nen cap nhat lai trong cay xep hang
-        CapNhatCay(&cayXepHang, sv);
+        // Neu sinh vien chua co trong cay (vua doc tu file) thi chen moi vao
+        if (CapNhatCay(&cayXepHang, sv) == 0) {
+            ThemCay(&cayXepHang, sv);
+        }
     }
 }
 

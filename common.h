@@ -27,6 +27,8 @@ const int IDC_BTN_THEM_SV = 104;
 const int IDC_BANG_SINH_VIEN = 105;
 const int IDC_BTN_XOA_SV = 106;
 const int IDC_BTN_SUA_SV = 107;
+const int IDC_BTN_LUU_FILE = 108;
+const int IDC_BTN_DOC_FILE = 109;
 
 const int IDC_MA_DIEM_DANH = 110;
 const int IDC_NGAY_HOC = 111;
@@ -94,3 +96,7 @@ void XoaSinhVien();
 void SuaSinhVien();
 void LuuDiemDanh();
 void XemXepHang();
+
+// ===== fileio.cpp: luu doc file =====
+void LuuFile();
+void DocFile();

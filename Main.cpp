@@ -13,7 +13,7 @@ HWND topKEdit = NULL, bangXepHang = NULL;
 
 // ===== Tao giao dien tung trang =====
 
-// Trang Sinh vien: ba o nhap, ba nut Them/Xoa/Sua, bang
+// Trang Sinh vien: ba o nhap, nam nut Them/Xoa/Sua/Luu file/Doc file, bang
 void TaoTrangSinhVien(HWND p) {
     TaoNhan(p, L"Mã SV", 18, 22, 55);
     maSinhVien = TaoO(p, IDC_MA_SV, 78, 20, 110);
@@ -28,8 +28,12 @@ void TaoTrangSinhVien(HWND p) {
     TaoNut(p, IDC_BTN_XOA_SV, L"Xóa", 682, 18, 85);
     TaoNut(p, IDC_BTN_SUA_SV, L"Sửa", 774, 18, 85);
 
+    // Hai nut luu doc file dat o hang thu hai
+    TaoNut(p, IDC_BTN_LUU_FILE, L"Lưu file", 590, 52, 85);
+    TaoNut(p, IDC_BTN_DOC_FILE, L"Đọc file", 682, 52, 85);
+
     bangSinhVien = TaoBang(p, IDC_BANG_SINH_VIEN,
-                           L"Mã SV", L"Họ tên", L"Mã lớp", NULL, 70);
+                           L"Mã SV", L"Họ tên", L"Mã lớp", NULL, 92);
 }
 
 // Trang Diem danh: o ma SV, chon ngay, check Co mat, nut Luu, bang
@@ -138,9 +142,12 @@ void BoTriCuaSo(HWND h) {
     }
 
     // Ba bang gian theo kich thuoc cua so
+    // Trang Sinh vien co 2 hang nut nen bang phai ha xuong thap hon
     HWND bang[3] = {bangSinhVien, bangDiemDanh, bangXepHang};
+    int viTriY[3] = {92, 70, 70};
+
     for (int i = 0; i < 3; i++) {
-        MoveWindow(bang[i], 18, 70, rong - 36, cao - 100, TRUE);
+        MoveWindow(bang[i], 18, viTriY[i], rong - 36, cao - viTriY[i] - 30, TRUE);
     }
 }
 
@@ -161,6 +168,8 @@ void XuLyLenh(WORD id, WORD thongBao) {
     if (id == IDC_BTN_THEM_SV) ThemSinhVien();
     else if (id == IDC_BTN_XOA_SV) XoaSinhVien();
     else if (id == IDC_BTN_SUA_SV) SuaSinhVien();
+    else if (id == IDC_BTN_LUU_FILE) LuuFile();
+    else if (id == IDC_BTN_DOC_FILE) DocFile();
     else if (id == IDC_BTN_LUU_DIEM_DANH) LuuDiemDanh();
     else if (id == IDC_BTN_XEM_TOP_K) XemXepHang();
 }
