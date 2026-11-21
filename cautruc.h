@@ -131,3 +131,4 @@ int  DaDiemDanh(LichSuDiemDanh* l, const wchar_t* ma, int ngay, int thang, int n
 int  ThemBanGhi(LichSuDiemDanh* l, const wchar_t* ma, int ngay, int thang, int nam, int coMat);
 int  DemTongBuoiCuaLop(LichSuDiemDanh* l);          // so buoi hoc da diem danh
 int  DemBuoiCoMatCuaSV(LichSuDiemDanh* l, const wchar_t* ma);
+int  XoaBanGhiCuaSV(LichSuDiemDanh* l, const wchar_t* ma);  // xoa moi ban ghi cua 1 SV

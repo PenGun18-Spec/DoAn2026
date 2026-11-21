@@ -71,6 +71,75 @@ void ThemSinhVien() {
     ThongBao(L"Đã thêm sinh viên.");
 }
 
+// Tinh lai diem cho tat ca sinh vien con lai
+// Goi sau khi xoa sinh vien, vi tong so buoi cua lop co the giam
+void TinhLaiDiemTatCa() {
+    int tongBuoi = DemTongBuoiCuaLop(&lichSu);
+
+    for (int i = 0; i < danhSachDac.soLuong; i++) {
+        SinhVien* sv = &danhSachDac.ds[i];
+
+        sv->soBuoiCoMat = DemBuoiCoMatCuaSV(&lichSu, sv->ma);
+        sv->tongSoBuoi = tongBuoi;
+
+        if (tongBuoi > 0) {
+            sv->diem = (double)sv->soBuoiCoMat / (double)tongBuoi * 10.0;
+        } else {
+            sv->diem = 0;
+        }
+
+        // Diem co the doi nen cap nhat lai trong cay xep hang
+        CapNhatCay(&cayXepHang, sv);
+    }
+}
+
+// Xoa mot sinh vien khoi danh sach
+void XoaSinhVien() {
+    wchar_t ma[MAX_CHU];
+    DocO(maSinhVien, ma);
+
+    // Kiem tra da nhap ma chua
+    if (wcslen(ma) == 0) {
+        CanhBao(L"Vui lòng nhập Mã SV cần xóa.");
+        return;
+    }
+
+    // Tim sinh vien trong danh sach
+    int viTri = TimDac(&danhSachDac, ma);
+    if (viTri == -1) {
+        CanhBao(L"Không tìm thấy sinh viên có mã này.");
+        return;
+    }
+
+    // Hoi lai cho chac, tranh xoa nham
+    wchar_t cauHoi[MAX_CHU];
+    swprintf_s(cauHoi, L"Bạn có chắc muốn xóa sinh viên %s không?", ma);
+
+    if (HoiXacNhan(cauHoi) == 0) {
+        return;                         // nguoi dung bam Khong
+    }
+
+    // Xoa khoi ca ba cau truc du lieu
+    XoaDac(&danhSachDac, ma);
+    XoaLienKet(&danhSachLienKet, ma);
+    XoaCay(&cayXepHang, ma);
+
+    // Xoa cac ban ghi diem danh cua sinh vien nay
+    XoaBanGhiCuaSV(&lichSu, ma);
+
+    // Tinh lai diem cho nhung nguoi con lai (tong so buoi lop da thay doi)
+    TinhLaiDiemTatCa();
+
+    // Xoa dong trong bang
+    XoaDongTheoMa(bangSinhVien, ma);
+
+    // Xoa o nhap va dua con tro ve
+    DatChuoi(maSinhVien, L"");
+    ChonO(maSinhVien);
+
+    ThongBao(L"Đã xóa sinh viên.");
+}
+
 // Luu mot lan diem danh
 void LuuDiemDanh() {
     wchar_t ma[MAX_CHU];

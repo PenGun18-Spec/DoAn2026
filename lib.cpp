@@ -134,6 +134,31 @@ void XoaBang(HWND bang) {
     ListView_DeleteAllItems(bang);
 }
 
+// Xoa dong co cot dau tien bang ma cho truoc
+void XoaDongTheoMa(HWND bang, const wchar_t* ma) {
+    int soDong = ListView_GetItemCount(bang);
+
+    for (int dong = 0; dong < soDong; dong++) {
+        wchar_t chu[MAX_CHU];
+        ListView_GetItemText(bang, dong, 0, chu, MAX_CHU);
+
+        if (wcscmp(chu, ma) == 0) {
+            ListView_DeleteItem(bang, dong);
+            return;
+        }
+    }
+}
+
+// Hien hop thoai hoi Co/Khong, tra ve 1 neu nguoi dung bam Co
+int HoiXacNhan(const wchar_t* chu) {
+    int ketQua = MessageBoxW(cuaSo, chu, L"DA-030", MB_YESNO | MB_ICONQUESTION);
+
+    if (ketQua == IDYES) {
+        return 1;
+    }
+    return 0;
+}
+
 // Lay ngay dang chon trong DateTimePicker
 SYSTEMTIME LayNgay(HWND chonNgay) {
     SYSTEMTIME ngay = {0};

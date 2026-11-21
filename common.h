@@ -30,6 +30,7 @@ const int IDC_HO_TEN = 102;
 const int IDC_MA_LOP = 103;
 const int IDC_BTN_THEM_SV = 104;
 const int IDC_BANG_SINH_VIEN = 105;
+const int IDC_BTN_XOA_SV = 106;
 
 const int IDC_MA_DIEM_DANH = 110;
 const int IDC_NGAY_HOC = 111;
@@ -82,8 +83,10 @@ void ChonO(HWND o);
 void ThemDong(HWND bang, const wchar_t* cot0, const wchar_t* cot1,
               const wchar_t* cot2, const wchar_t* cot3);
 void XoaBang(HWND bang);                    // xoa het dong trong bang
+void XoaDongTheoMa(HWND bang, const wchar_t* ma);   // xoa dong co cot 0 = ma
 SYSTEMTIME LayNgay(HWND chonNgay);
 bool DangChon(HWND hopKiem);
+int  HoiXacNhan(const wchar_t* chu);        // hop thoai Co/Khong, 1 = Co
 void ThongBao(const wchar_t* chu);
 void CanhBao(const wchar_t* chu);
 void CanGiuaCuaSo(HWND h);
@@ -91,5 +94,6 @@ void CanGiuaCuaSo(HWND h);
 // ===== setting.cpp: cac chuc nang =====
 void KhoiTaoDuLieu();
 void ThemSinhVien();
+void XoaSinhVien();
 void LuuDiemDanh();
 void XemXepHang();

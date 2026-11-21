@@ -24,7 +24,8 @@ void TaoTrangSinhVien(HWND p) {
     TaoNhan(p, L"Mã lớp", 530, 22, 65);
     maLop = TaoO(p, IDC_MA_LOP, 598, 20, 125);
 
-    TaoNut(p, IDC_BTN_THEM_SV, L"Thêm SV", 742, 18, 120);
+    TaoNut(p, IDC_BTN_THEM_SV, L"Thêm SV", 640, 18, 110);
+    TaoNut(p, IDC_BTN_XOA_SV, L"Xóa SV", 760, 18, 100);
 
     bangSinhVien = TaoBang(p, IDC_BANG_SINH_VIEN,
                            L"Mã SV", L"Họ tên", L"Mã lớp", NULL, 70);
@@ -160,6 +161,7 @@ void XuLyLenh(WORD id, WORD thongBao) {
     if (thongBao != BN_CLICKED) return;
 
     if (id == IDC_BTN_THEM_SV) ThemSinhVien();
+    else if (id == IDC_BTN_XOA_SV) XoaSinhVien();
     else if (id == IDC_BTN_LUU_DIEM_DANH) LuuDiemDanh();
     else if (id == IDC_BTN_XEM_TOP_K) XemXepHang();
 }

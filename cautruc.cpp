@@ -535,3 +535,22 @@ int DemBuoiCoMatCuaSV(LichSuDiemDanh* l, const wchar_t* ma) {
 
     return dem;
 }
+
+// Xoa tat ca ban ghi diem danh cua mot sinh vien
+// Duyet mang, giu lai cac ban ghi cua nguoi khac, tra ve so ban ghi da xoa
+int XoaBanGhiCuaSV(LichSuDiemDanh* l, const wchar_t* ma) {
+    int daXoa = 0;
+    int moi = 0;
+
+    for (int i = 0; i < l->soLuong; i++) {
+        if (wcscmp(l->ds[i].ma, ma) == 0) {
+            daXoa++;                    // ban ghi cua sinh vien can xoa -> bo qua
+        } else {
+            l->ds[moi] = l->ds[i];      // ban ghi cua nguoi khac -> giu lai
+            moi++;
+        }
+    }
+
+    l->soLuong = moi;
+    return daXoa;
+}
