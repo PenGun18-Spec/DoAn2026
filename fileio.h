@@ -10,3 +10,7 @@ void LuuFile();
 
 // Doc du lieu tu 2 file do vao lai chuong trinh
 void DocFile();
+
+// Xuat bao cao hoc vu ra file baocao.txt:
+// bang xep hang day du + thong ke tong ket cua lop
+void XuatBaoCao();

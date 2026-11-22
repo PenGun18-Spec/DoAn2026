@@ -28,9 +28,10 @@ void TaoTrangSinhVien(HWND p) {
     TaoNut(p, IDC_BTN_XOA_SV, L"Xóa", 682, 18, 85);
     TaoNut(p, IDC_BTN_SUA_SV, L"Sửa", 774, 18, 85);
 
-    // Hai nut luu doc file dat o hang thu hai
+    // Hai nut luu doc file va xuat bao cao dat o hang thu hai
     TaoNut(p, IDC_BTN_LUU_FILE, L"Lưu file", 590, 52, 85);
     TaoNut(p, IDC_BTN_DOC_FILE, L"Đọc file", 682, 52, 85);
+    TaoNut(p, IDC_BTN_XUAT_BAO_CAO, L"Xuất báo cáo", 774, 52, 85);
 
     bangSinhVien = TaoBang(p, IDC_BANG_SINH_VIEN,
                            L"Mã SV", L"Họ tên", L"Mã lớp", NULL, 92);
@@ -170,6 +171,7 @@ void XuLyLenh(WORD id, WORD thongBao) {
     else if (id == IDC_BTN_SUA_SV) SuaSinhVien();
     else if (id == IDC_BTN_LUU_FILE) LuuFile();
     else if (id == IDC_BTN_DOC_FILE) DocFile();
+    else if (id == IDC_BTN_XUAT_BAO_CAO) XuatBaoCao();
     else if (id == IDC_BTN_LUU_DIEM_DANH) LuuDiemDanh();
     else if (id == IDC_BTN_XEM_TOP_K) XemXepHang();
 }

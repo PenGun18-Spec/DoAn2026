@@ -39,6 +39,7 @@ const int IDC_BANG_DIEM_DANH = 114;
 const int IDC_TOP_K_EDIT = 121;
 const int IDC_BTN_XEM_TOP_K = 122;
 const int IDC_BANG_XEP_HANG = 123;
+const int IDC_BTN_XUAT_BAO_CAO = 124;
 
 // ===== Bien toan cuc =====
 // hInst va gFont dinh nghia trong lib.cpp
@@ -100,3 +101,4 @@ void XemXepHang();
 // ===== fileio.cpp: luu doc file =====
 void LuuFile();
 void DocFile();
+void XuatBaoCao();

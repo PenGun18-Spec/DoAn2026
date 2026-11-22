@@ -11,6 +11,7 @@
 // Hai file du lieu nam cung thu muc voi file .exe
 const wchar_t* TEN_FILE_SV = L"sinhvien.txt";
 const wchar_t* TEN_FILE_DD = L"diemdanh.txt";
+const wchar_t* TEN_FILE_BC = L"baocao.txt";
 
 // Ba cau truc du lieu chinh nam trong setting.cpp
 extern DanhSachDac danhSachDac;
@@ -173,4 +174,75 @@ void DocFile() {
     }
 
     ThongBao(L"Đã đọc dữ liệu từ file.");
+}
+
+// ===== XUAT BAO CAO HOC VU =====
+// Ghi ra baocao.txt: thong ke tong ket + bang xep hang day du
+// Bang xep hang lay tu cay Order-Statistic Tree qua ham Select(k)
+void XuatBaoCao() {
+    if (danhSachDac.soLuong == 0) {
+        CanhBao(L"Chưa có sinh viên nào để xuất báo cáo.");
+        return;
+    }
+
+    FILE* f = NULL;
+    _wfopen_s(&f, TEN_FILE_BC, L"w, ccs=UTF-8");
+    if (f == NULL) {
+        CanhBao(L"Không mở được file baocao.txt để ghi.");
+        return;
+    }
+
+    // Lay ngay thang hien tai de ghi vao bao cao
+    SYSTEMTIME t;
+    GetLocalTime(&t);
+
+    fwprintf(f, L"=================================================\n");
+    fwprintf(f, L"   BAO CAO HOC VU - DIEM DANH VA XEP HANG\n");
+    fwprintf(f, L"   DA-030\n");
+    fwprintf(f, L"   Ngay xuat: %02d/%02d/%04d\n", t.wDay, t.wMonth, t.wYear);
+    fwprintf(f, L"=================================================\n\n");
+
+    // ----- Phan 1: thong ke tong ket cua lop -----
+    int tongBuoi = DemTongBuoiCuaLop(&lichSu);
+
+    double tongDiem = 0;
+    for (int i = 0; i < danhSachDac.soLuong; i++) {
+        tongDiem += danhSachDac.ds[i].diem;
+    }
+
+    double diemTrungBinh = 0;
+    if (danhSachDac.soLuong > 0) {
+        diemTrungBinh = tongDiem / danhSachDac.soLuong;
+    }
+
+    fwprintf(f, L"----- THONG KE LOP -----\n");
+    fwprintf(f, L"Tong so sinh vien : %d\n", danhSachDac.soLuong);
+    fwprintf(f, L"Tong so buoi da diem danh : %d\n", tongBuoi);
+    fwprintf(f, L"Diem trung binh lop : %.2f\n", diemTrungBinh);
+    fwprintf(f, L"\n");
+
+    // ----- Phan 2: bang xep hang day du -----
+    // Duyet cay Order-Statistic Tree: Select(k) tra ve nguoi thu k
+    // tu diem cao xuong thap, moi lan goi ton O(log n)
+    fwprintf(f, L"----- BANG XEP HANG -----\n");
+    fwprintf(f, L"Hang | Ma SV    | Ho va ten                | Lop   | Co mat | Tong buoi | Diem\n");
+    fwprintf(f, L"---- + -------- + ------------------------ + ----- + ------ + --------- + -----\n");
+
+    for (int hang = 1; hang <= cayXepHang.soLuong; hang++) {
+        NutAVL* nut = Select(&cayXepHang, hang);
+        if (nut == NULL) {
+            break;
+        }
+
+        fwprintf(f, L"%4d | %-8s | %-24s | %-5s | %6d | %9d | %.2f\n",
+                 hang, nut->sv.ma, nut->sv.hoTen, nut->sv.maLop,
+                 nut->sv.soBuoiCoMat, nut->sv.tongSoBuoi, nut->sv.diem);
+    }
+
+    fwprintf(f, L"\n");
+    fwprintf(f, L"Cong thuc diem: so buoi co mat / tong so buoi cua lop * 10\n");
+
+    fclose(f);
+
+    ThongBao(L"Đã xuất báo cáo học vụ ra file baocao.txt.");
 }
