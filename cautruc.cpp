@@ -1,10 +1,3 @@
-// DA-030: cai dat ba cau truc du lieu
-//   Danh sach dac, Danh sach lien ket, Cay AVL / Order-Statistic Tree
-//
-// Quy uoc cua cay: diem cao nam ben trai.
-// Nho vay Select(1) la nguoi diem cao nhat, Rank(x) la hang cua nguoi do
-// (hang 1 = diem cao nhat).
-
 #include "cautruc.h"
 
 // ===========================================================================

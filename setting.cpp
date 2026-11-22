@@ -12,6 +12,18 @@ DanhSachLienKet danhSachLienKet; // danh sach lien ket
 CayAVL cayXepHang;              // cay AVL + Order-Statistic Tree
 LichSuDiemDanh lichSu;          // lich su cac lan diem danh
 
+// Dong bo ban ghi trong danh sach lien ket voi ban ghi chinh trong mang.
+// fileio.cpp doc du lieu de ghi file tu danh sach lien ket, nen hai noi nay
+// phai luon cung so buoi co mat, tong so buoi va diem.
+void DongBoLienKet(const SinhVien* sv) {
+    if (sv == NULL) return;
+
+    NutLienKet* nut = TimLienKet(&danhSachLienKet, sv->ma);
+    if (nut != NULL) {
+        nut->sv = *sv;
+    }
+}
+
 // Khoi tao ba cau truc, goi mot lan luc bat dau chuong trinh
 void KhoiTaoDuLieu() {
     KhoiTaoDanhSachDac(&danhSachDac);
@@ -87,6 +99,8 @@ void TinhLaiDiemTatCa() {
         } else {
             sv->diem = 0;
         }
+
+        DongBoLienKet(sv);
 
         // Diem co the doi nen cap nhat lai trong cay xep hang
         // Neu sinh vien chua co trong cay (vua doc tu file) thi chen moi vao
@@ -240,22 +254,12 @@ void LuuDiemDanh() {
         return;
     }
 
-    // Cap nhat so buoi cua sinh vien va tinh lai diem
+    // Cap nhat so buoi cua tat ca sinh vien va tinh lai diem.
+    // Ham nay cung dong bo danh sach lien ket, la noi LuuFile() se doc.
+    TinhLaiDiemTatCa();
+
+    // Lay lai ban ghi sau khi dong bo de cap nhat dung thong tin tren bang.
     SinhVien* sv = &danhSachDac.ds[viTri];
-
-    sv->soBuoiCoMat = DemBuoiCoMatCuaSV(&lichSu, ma);
-    sv->tongSoBuoi = DemTongBuoiCuaLop(&lichSu);
-
-    // Diem = so buoi co mat / tong so buoi cua LOP * 10
-    // Dung tong so buoi cua lop lam mau so de moi sinh vien duoc so sanh cong bang
-    if (sv->tongSoBuoi > 0) {
-        sv->diem = (double)sv->soBuoiCoMat / (double)sv->tongSoBuoi * 10.0;
-    } else {
-        sv->diem = 0;
-    }
-
-    // Diem da doi nen phai cap nhat lai trong cay xep hang
-    CapNhatCay(&cayXepHang, sv);
 
     // Hien ket qua len bang diem danh
     wchar_t ngayChu[MAX_CHU];

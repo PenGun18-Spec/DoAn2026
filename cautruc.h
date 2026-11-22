@@ -1,12 +1,3 @@
-// DA-030: khai bao ba cau truc du lieu tu cai dat
-//   Danh sach dac        - mang tinh
-//   Danh sach lien ket   - cac nut noi nhau bang con tro
-//   Cay AVL              - cay nhi phan tim kiem tu can bang
-//   Order-Statistic Tree - cay AVL mo rong, moi nut luu them so nut cua cay con
-//
-// Nho hai ham Select(k) va Rank(x) cua Order-Statistic Tree ma tim nguoi thu k
-// va tim thu hang cua mot nguoi chi ton O(log n), khong can sap xep lai danh sach.
-
 #pragma once
 
 #include "common.h"
@@ -14,9 +5,8 @@
 // ===========================================================================
 // 1. DANH SACH DAC (mang tinh)
 // ===========================================================================
-// Luu sinh vien trong mot mang, them vao cuoi.
-// Them nhanh, nhung xoa phai don mang len.
-// ===========================================================================
+
+
 
 const int MAX_SINH_VIEN = 100;
 
@@ -33,9 +23,7 @@ int  XoaDac(DanhSachDac* d, const wchar_t* ma);     // 1 neu xoa duoc
 // ===========================================================================
 // 2. DANH SACH LIEN KET
 // ===========================================================================
-// Moi sinh vien nam trong mot nut, cac nut noi voi nhau bang con tro next.
-// Them/xoa khong phai don mang, nhung muon lay nut thu i phai duyet tu dau.
-// ===========================================================================
+
 
 struct NutLienKet {
     SinhVien sv;
@@ -56,14 +44,7 @@ void XoaToanBoLienKet(DanhSachLienKet* d);                  // giai phong bo nho
 // ===========================================================================
 // 3. CAY AVL va ORDER-STATISTIC TREE
 // ===========================================================================
-// Cay AVL: cay nhi phan tim kiem tu can bang. Sau moi lan chen/xoa, do cao hai
-// ben chenh nhau khong qua 1, nho vay cay luon thap (~log n).
-//
-// Order-Statistic Tree: cay AVL co them truong "size" = so nut cua cay con
-// (tinh ca nut do). Nho truong nay:
-//   - Select(k): tim nut thu k theo thu tu tu diem cao xuong thap, O(log n)
-//   - Rank(x)  : tim thu hang cua nut x, O(log n)
-// ===========================================================================
+
 
 struct NutAVL {
     SinhVien sv;
@@ -105,11 +86,7 @@ int     Rank(CayAVL* c, double diem);               // hang cua mot muc diem, 0 
 // ===========================================================================
 // 4. LICH SU DIEM DANH
 // ===========================================================================
-// Moi lan bam "Luu diem danh" sinh ra mot ban ghi: ai, ngay nao, co mat hay vang.
-// Nho lich su nay ma:
-//   - Chan duoc viec diem danh trung mot nguoi trong cung mot ngay
-//   - Dem duoc tong so buoi cua ca lop (mau so de tinh diem chuyen can)
-// ===========================================================================
+
 
 const int MAX_DIEM_DANH = 1000;     // so ban ghi toi da
 

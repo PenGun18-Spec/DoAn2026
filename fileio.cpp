@@ -7,6 +7,25 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <wchar.h>
+
+// Xoa khoang trang o dau/cuoi mot truong doc tu file bang.
+void CatKhoangTrang(wchar_t* chuoi) {
+    if (chuoi == NULL) return;
+
+    wchar_t* dau = chuoi;
+    while (*dau == L' ' || *dau == L'\t') dau++;
+    if (dau != chuoi) {
+        size_t doDai = wcslen(dau);
+        wmemmove(chuoi, dau, doDai + 1);
+    }
+
+    size_t doDai = wcslen(chuoi);
+    while (doDai > 0 && (chuoi[doDai - 1] == L' ' || chuoi[doDai - 1] == L'\t' ||
+                         chuoi[doDai - 1] == L'\r' || chuoi[doDai - 1] == L'\n')) {
+        chuoi[--doDai] = L'\0';
+    }
+}
 
 // Hai file du lieu nam cung thu muc voi file .exe
 const wchar_t* TEN_FILE_SV = L"sinhvien.txt";
@@ -56,11 +75,18 @@ void LuuFile() {
         return;
     }
 
+    fwprintf(f, L"DANH SACH SINH VIEN - DA-030\n");
+    fwprintf(f, L"==========================================================================\n");
+    fwprintf(f, L"Ma SV        | Ho va ten                 | Ma lop | Co mat | Tong buoi\n");
+    fwprintf(f, L"-------------+---------------------------+--------+--------+-----------\n");
+
     for (NutLienKet* p = danhSachLienKet.dau; p != NULL; p = p->next) {
-        fwprintf(f, L"%s|%s|%s|%d|%d\n",
+        fwprintf(f, L"%-12s | %-25s | %-6s | %6d | %9d\n",
                  p->sv.ma, p->sv.hoTen, p->sv.maLop,
                  p->sv.soBuoiCoMat, p->sv.tongSoBuoi);
     }
+    fwprintf(f, L"==========================================================================\n");
+    fwprintf(f, L"Ghi chu: Diem duoc tinh tu so buoi co mat / tong so buoi * 10.\n");
     fclose(f);
 
     // --- Ghi lich su diem danh ---
@@ -70,12 +96,18 @@ void LuuFile() {
         return;
     }
 
+    fwprintf(f, L"LICH SU DIEM DANH - DA-030\n");
+    fwprintf(f, L"===============================================================\n");
+    fwprintf(f, L"Ma SV        | Ngay hoc   | Trang thai\n");
+    fwprintf(f, L"-------------+------------+-----------\n");
     for (int i = 0; i < lichSu.soLuong; i++) {
-        fwprintf(f, L"%s|%d|%d|%d|%d\n",
+        fwprintf(f, L"%-12s | %02d/%02d/%04d | %s\n",
                  lichSu.ds[i].ma,
                  lichSu.ds[i].ngay, lichSu.ds[i].thang, lichSu.ds[i].nam,
-                 lichSu.ds[i].coMat);
+                 lichSu.ds[i].coMat ? L"Co mat" : L"Vang");
     }
+    fwprintf(f, L"===============================================================\n");
+    fwprintf(f, L"Ghi chu: Co mat = da tham gia buoi hoc; Vang = khong tham gia.\n");
     fclose(f);
 
     ThongBao(L"Đã lưu dữ liệu vào file.");
@@ -101,12 +133,28 @@ void DocFile() {
     int soBuoiCoMat;
     int tongSoBuoi;
 
-    // Moi dong co dang: ma|hoTen|maLop|soBuoiCoMat|tongSoBuoi
-    while (fwscanf_s(f, L"%99[^|]|%99[^|]|%99[^|]|%d|%d\n",
-                     ma, (unsigned)_countof(ma),
-                     ten, (unsigned)_countof(ten),
-                     lop, (unsigned)_countof(lop),
-                     &soBuoiCoMat, &tongSoBuoi) == 5) {
+    // Doc ca dinh dang bang moi va dinh dang cu dang ma|ten|lop|coMat|tongBuoi.
+    wchar_t dong[512];
+    while (fgetws(dong, (int)_countof(dong), f) != NULL) {
+        CatKhoangTrang(dong);
+        if (dong[0] == L'\0' || dong[0] == L'=' || dong[0] == L'-' ||
+            wcsncmp(dong, L"DANH SACH", 9) == 0 ||
+            wcsncmp(dong, L"Ma SV", 5) == 0 ||
+            wcsncmp(dong, L"Ghi chu:", 8) == 0) {
+            continue;
+        }
+
+        if (swscanf_s(dong, L"%99[^|]|%99[^|]|%99[^|]|%d|%d",
+                      ma, (unsigned)_countof(ma),
+                      ten, (unsigned)_countof(ten),
+                      lop, (unsigned)_countof(lop),
+                      &soBuoiCoMat, &tongSoBuoi) != 5) {
+            continue;
+        }
+        CatKhoangTrang(ma);
+        CatKhoangTrang(ten);
+        CatKhoangTrang(lop);
+
         SinhVien sv;
         wcscpy_s(sv.ma, ma);
         wcscpy_s(sv.hoTen, ten);
@@ -125,13 +173,40 @@ void DocFile() {
 
     if (f != NULL) {
         wchar_t maDD[MAX_CHU];
+        wchar_t trangThai[MAX_CHU];
         int ngay, thang, nam, coMat;
+        wchar_t dongDD[512];
 
-        // Moi dong co dang: ma|ngay|thang|nam|coMat
-        while (fwscanf_s(f, L"%99[^|]|%d|%d|%d|%d\n",
-                         maDD, (unsigned)_countof(maDD),
-                         &ngay, &thang, &nam, &coMat) == 5) {
-            ThemBanGhi(&lichSu, maDD, ngay, thang, nam, coMat);
+        // Doc dinh dang moi: ma | dd/mm/yyyy | Co mat/Vang.
+        // Van ho tro dinh dang cu: ma|ngay|thang|nam|0/1.
+        while (fgetws(dongDD, (int)_countof(dongDD), f) != NULL) {
+            CatKhoangTrang(dongDD);
+            if (dongDD[0] == L'\0' || dongDD[0] == L'=' || dongDD[0] == L'-' ||
+                wcsncmp(dongDD, L"LICH SU", 7) == 0 ||
+                wcsncmp(dongDD, L"Ma SV", 5) == 0 ||
+                wcsncmp(dongDD, L"Ghi chu:", 8) == 0) {
+                continue;
+            }
+
+            int soTruong = swscanf_s(dongDD, L"%99[^|]|%d/%d/%d|%99[^\\r\\n]",
+                                     maDD, (unsigned)_countof(maDD),
+                                     &ngay, &thang, &nam,
+                                     trangThai, (unsigned)_countof(trangThai));
+            if (soTruong == 5) {
+                CatKhoangTrang(maDD);
+                CatKhoangTrang(trangThai);
+                coMat = (_wcsnicmp(trangThai, L"Co mat", 6) == 0) ? 1 : 0;
+                ThemBanGhi(&lichSu, maDD, ngay, thang, nam, coMat);
+                continue;
+            }
+
+            // Fallback cho file cu co 5 truong so nguyen.
+            if (swscanf_s(dongDD, L"%99[^|]|%d|%d|%d|%d",
+                          maDD, (unsigned)_countof(maDD),
+                          &ngay, &thang, &nam, &coMat) == 5) {
+                CatKhoangTrang(maDD);
+                ThemBanGhi(&lichSu, maDD, ngay, thang, nam, coMat);
+            }
         }
         fclose(f);
     }
@@ -196,11 +271,11 @@ void XuatBaoCao() {
     SYSTEMTIME t;
     GetLocalTime(&t);
 
-    fwprintf(f, L"=================================================\n");
-    fwprintf(f, L"   BAO CAO HOC VU - DIEM DANH VA XEP HANG\n");
-    fwprintf(f, L"   DA-030\n");
-    fwprintf(f, L"   Ngay xuat: %02d/%02d/%04d\n", t.wDay, t.wMonth, t.wYear);
-    fwprintf(f, L"=================================================\n\n");
+    fwprintf(f, L"================================================================================\n");
+    fwprintf(f, L"                 BAO CAO HOC VU - DA-030\n");
+    fwprintf(f, L"                 DIEM DANH VA XEP HANG\n");
+    fwprintf(f, L"Ngay xuat bao cao: %02d/%02d/%04d\n", t.wDay, t.wMonth, t.wYear);
+    fwprintf(f, L"================================================================================\n\n");
 
     // ----- Phan 1: thong ke tong ket cua lop -----
     int tongBuoi = DemTongBuoiCuaLop(&lichSu);
@@ -215,18 +290,18 @@ void XuatBaoCao() {
         diemTrungBinh = tongDiem / danhSachDac.soLuong;
     }
 
-    fwprintf(f, L"----- THONG KE LOP -----\n");
-    fwprintf(f, L"Tong so sinh vien : %d\n", danhSachDac.soLuong);
-    fwprintf(f, L"Tong so buoi da diem danh : %d\n", tongBuoi);
-    fwprintf(f, L"Diem trung binh lop : %.2f\n", diemTrungBinh);
-    fwprintf(f, L"\n");
+    fwprintf(f, L"------------------------------ THONG KE LOP -------------------------------\n");
+    fwprintf(f, L"Tong so sinh vien       : %d\n", danhSachDac.soLuong);
+    fwprintf(f, L"Tong so buoi hoc        : %d\n", tongBuoi);
+    fwprintf(f, L"Diem trung binh lop     : %.2f\n", diemTrungBinh);
+    fwprintf(f, L"================================================================================\n\n");
 
     // ----- Phan 2: bang xep hang day du -----
     // Duyet cay Order-Statistic Tree: Select(k) tra ve nguoi thu k
     // tu diem cao xuong thap, moi lan goi ton O(log n)
-    fwprintf(f, L"----- BANG XEP HANG -----\n");
-    fwprintf(f, L"Hang | Ma SV    | Ho va ten                | Lop   | Co mat | Tong buoi | Diem\n");
-    fwprintf(f, L"---- + -------- + ------------------------ + ----- + ------ + --------- + -----\n");
+    fwprintf(f, L"------------------------------ BANG XEP HANG -------------------------------\n");
+    fwprintf(f, L"Hang | Ma SV      | Ho va ten                 | Lop    | Co mat | Tong buoi | Diem\n");
+    fwprintf(f, L"-----+------------+---------------------------+--------+--------+-----------+-----\n");
 
     for (int hang = 1; hang <= cayXepHang.soLuong; hang++) {
         NutAVL* nut = Select(&cayXepHang, hang);
@@ -234,13 +309,14 @@ void XuatBaoCao() {
             break;
         }
 
-        fwprintf(f, L"%4d | %-8s | %-24s | %-5s | %6d | %9d | %.2f\n",
+        fwprintf(f, L"%4d | %-10s | %-25s | %-6s | %6d | %9d | %4.2f\n",
                  hang, nut->sv.ma, nut->sv.hoTen, nut->sv.maLop,
                  nut->sv.soBuoiCoMat, nut->sv.tongSoBuoi, nut->sv.diem);
     }
 
-    fwprintf(f, L"\n");
+    fwprintf(f, L"\n================================================================================\n");
     fwprintf(f, L"Cong thuc diem: so buoi co mat / tong so buoi cua lop * 10\n");
+    fwprintf(f, L"Ghi chu: Hang 1 la sinh vien co diem chuyen can cao nhat.\n");
 
     fclose(f);
 
